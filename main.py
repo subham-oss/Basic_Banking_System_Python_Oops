@@ -144,6 +144,21 @@ class Bank:
             else:
                 print("Invalid choice.")
 
+
+    def delete_account(self):
+        account_number = input("Enter your account number:- ")
+        pin = int(input("Enter your pin:- "))
+                                        
+        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
+                                        
+        if user_data == []:
+            print("Invalid account number or pin.")
+        else:
+            Bank.data.remove(user_data[0])
+            Bank.__update()
+            print("Account deleted successfully.")
+
+
 user = Bank()
 print("Press 1 for creating an account:- ")
 print("Press 2 for deposit the money:- ")
@@ -169,3 +184,9 @@ elif check == 4:
 
 elif check == 5:
     user.update_details()
+
+elif check == 6:
+    user.delete_account()
+
+else:
+    print("Invalid choice.")
