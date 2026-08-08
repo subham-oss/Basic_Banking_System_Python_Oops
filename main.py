@@ -97,6 +97,21 @@ class Bank:
                 print("Amount withdrawn successfully.")
 
 
+    #details of account
+    def details(self):
+        account_number = input("Enter your account number:- ")
+        pin = int(input("Enter your pin:- "))
+                        
+        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
+                        
+        if user_data == False:
+            print("Invalid account number or pin.")
+        else:
+            print(f"Account number:- {user_data[0]['account_number']}")
+            print(f"Name:- {user_data[0]['name']}")
+            print(f"Balance:- {user_data[0]['balance']}")
+
+    
 
 user = Bank()
 print("Press 1 for creating an account:- ")
@@ -117,3 +132,5 @@ elif check == 2:
     
 elif check == 3:
     user.withdraw()
+elif check == 4:
+    user.details()
