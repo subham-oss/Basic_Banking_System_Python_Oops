@@ -4,7 +4,21 @@ import string
 from pathlib import Path
 
 class Bank:
-    pass
+    database='data.json'
+    data=[]
+    #database connection
+    try:
+        if Path(database).exists():
+            with open(database) as f:
+                data=json.load(f.read())
+        else:
+            print("Database file not found. Starting with an empty database.")
+    except Exception as e:
+        print(f"Error loading data: {e}")
+    
+    #create account
+    def create_account(self):
+        pass
 
 
 user = Bank()
