@@ -24,6 +24,7 @@ class Bank:
            f.write(json.dumps(Bank.data))
      
      
+    #generate account id
     @classmethod
     def __account_generate(cls):
            alpha = random.choices(string.ascii_letters,k=3)
@@ -32,7 +33,9 @@ class Bank:
            id = alpha + num + spchar
            random.shuffle(id)
            return "".join(id)
-           
+    
+    
+       
     #create account
     def create_account(self):
         data = {
@@ -54,6 +57,24 @@ class Bank:
             Bank.data.append(data)
             Bank.__update()
 
+    
+    #deposit money
+    def deposit(self):
+        account_number = input("Enter your account number:- ")
+        pin = int(input("Enter your pin:- "))
+        
+        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
+        
+        if user_data == False:
+            print("Invalid account number or pin.")
+        else:
+            amount = int(input("Enter the amount to deposit:- "))
+            if amount > 100000 or amount <= 0:
+                print("Invalid amount. Please enter a valid amount.")
+            else:
+                user_data[0]["balance"] += amount
+                Bank.__update()
+                print("Amount deposited successfully.")
 
 user = Bank()
 print("Press 1 for creating an account:- ")
@@ -68,3 +89,6 @@ check = int(input("Enter your choice:- "))
 
 if check == 1:
     user.create_account()
+    
+elif check == 2:
+    user.deposit()
