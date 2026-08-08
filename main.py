@@ -3,190 +3,215 @@ import random
 import string
 from pathlib import Path
 
+
 class Bank:
-    database='data.json'
-    data=[]
-    #database connection
-    try:
-        if Path(database).exists():
-            with open(database) as f:
-                data=json.load(f)
-        else:
-            print("Database file not found. Starting with an empty database.")
-    except Exception as e:
-        print(f"Error loading data: {e}")
-    
-    
-    #update database
-    @staticmethod
-    def __update():
-        with open(Bank.database, 'w') as f:
-           f.write(json.dumps(Bank.data))
-     
-     
-    #generate account id
-    @classmethod
-    def __account_generate(cls):
-           alpha = random.choices(string.ascii_letters,k=3)
-           num = random.choices(string.digits,k=3)
-           spchar = random.choices("!@#$%^&*",k=1)
-           id = alpha + num + spchar
-           random.shuffle(id)
-           return "".join(id)
-    
-    
-       
-    #create account
-    def create_account(self):
-        data = {
-            "name": input("Enter your name:- "),
-            "age":int(input("Enter your age:- ")),
-            "email": input("Enter your email:- "),
-            "pin":int(input("Enter your four digit pin:- ")),
-            "account_number":Bank.__account_generate(),
-            "balance":0
+    DATABASE = Path("data.json")
+
+    def __init__(self):
+        self.data = self._load_data()
+
+    # -----------------------------
+    # Load database
+    # -----------------------------
+    def _load_data(self):
+        try:
+            if self.DATABASE.exists():
+                with open(self.DATABASE, "r") as file:
+                    return json.load(file)
+
+            print("Database file not found. Starting with empty database.")
+            return []
+
+        except json.JSONDecodeError:
+            print("Invalid JSON database. Starting with empty database.")
+            return []
+
+        except Exception as error:
+            print(f"Error loading database: {error}")
+            return []
+
+    # -----------------------------
+    # Update database
+    # -----------------------------
+    def _update(self):
+        try:
+            with open(self.DATABASE, "w") as file:
+                json.dump(self.data, file, indent=4)
+
+        except Exception as error:
+            raise Exception(f"Database update failed: {error}")
+
+    # -----------------------------
+    # Generate account number
+    # -----------------------------
+    def _generate_account_number(self):
+        while True:
+            letters = "".join(
+                random.choices(string.ascii_uppercase, k=3)
+            )
+
+            numbers = "".join(
+                random.choices(string.digits, k=3)
+            )
+
+            special = random.choice("!@#$%^&*")
+
+            account_number = letters + numbers + special
+
+            if not any(
+                account["account_number"] == account_number
+                for account in self.data
+            ):
+                return account_number
+
+    # -----------------------------
+    # Find account
+    # -----------------------------
+    def _find_account(self, account_number, pin):
+        for account in self.data:
+            if (
+                account["account_number"] == account_number
+                and account["pin"] == pin
+            ):
+                return account
+
+        return None
+
+    # -----------------------------
+    # Create account
+    # -----------------------------
+    def create_account(self, name, age, email, pin):
+        if not name.strip():
+            return False, "Name cannot be empty."
+
+        if age < 18:
+            return False, "You must be at least 18 years old."
+
+        if not 1000 <= pin <= 9999:
+            return False, "PIN must be exactly 4 digits."
+
+        if "@" not in email or "." not in email:
+            return False, "Please enter a valid email."
+
+        account = {
+            "name": name.strip(),
+            "age": age,
+            "email": email.strip(),
+            "pin": pin,
+            "account_number": self._generate_account_number(),
+            "balance": 0
         }
-        if data["age"] < 18 or len(str(data["pin"])) != 4:
-            print("You are not eligible for creating an account.")
-        else:
-            print("Account created successfully.")
-            for i in data:
-                print(f"{i}: {data[i]}")
-            print("Please remember your account number and pin for future transactions.")
-            
-            Bank.data.append(data)
-            Bank.__update()
 
-    
-    #deposit money
-    def deposit(self):
-        account_number = input("Enter your account number:- ")
-        pin = int(input("Enter your pin:- "))
-        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
-        
-        if user_data == []:
-            print("Invalid account number or pin.")
-        else:
-            amount = int(input("Enter the amount to deposit:- "))
-            if amount > 100000 or amount <= 0:
-                print("Invalid amount. Please enter a valid amount.")
-            else:
-                user_data[0]["balance"] += amount
-                Bank.__update()
-                print("Amount deposited successfully.")
+        self.data.append(account)
+        self._update()
 
+        return True, account
 
-    #withdraw money
-    def withdraw(self):
-        account_number = input("Enter your account number:- ")
-        pin = int(input("Enter your pin:- "))
-                
-        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
-                
-        if user_data == []:
-            print("Invalid account number or pin.")
-        else:
-            amount = int(input("Enter the amount to withdraw:- "))
-            if amount > user_data[0]["balance"] or amount <= 0:
-                print("Invalid amount. Please enter a valid amount.")
-               
-            else:
-                user_data[0]["balance"] -= amount
-                Bank.__update()
-                print("Amount withdrawn successfully.")
+    # -----------------------------
+    # Deposit
+    # -----------------------------
+    def deposit(self, account_number, pin, amount):
+        account = self._find_account(account_number, pin)
 
+        if account is None:
+            return False, "Invalid account number or PIN."
 
-    #details of account
-    def details(self):
-        account_number = input("Enter your account number:- ")
-        pin = int(input("Enter your pin:- "))
-                        
-        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
-                        
-        if user_data == []:
-            print("Invalid account number or pin.")
-        else:
-            print(f"Account number:- {user_data[0]['account_number']}")
-            print(f"Name:- {user_data[0]['name']}")
-            print(f"Balance:- {user_data[0]['balance']}")
+        if amount <= 0:
+            return False, "Amount must be greater than 0."
 
+        if amount > 100000:
+            return False, "Maximum deposit is ₹1,00,000."
 
-    #update details
-    def update_details(self):
-        account_number = input("Enter your account number:- ")
-        pin = int(input("Enter your pin:- "))
-                                
-        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
-                                
-        if user_data == []:
-            print("Invalid account number or pin.")
-        else:
-            print("Press 1 for updating name:- ")
-            print("Press 2 for updating email:- ")
-            print("Press 3 for updating pin:- ")
-            check = int(input("Enter your choice:- "))
-            
-            if check == 1:
-                user_data[0]["name"] = input("Enter your new name:- ")
-                Bank.__update()
-                print("Name updated successfully.")
-                
-            elif check == 2:
-                user_data[0]["email"] = input("Enter your new email:- ")
-                Bank.__update()
-                print("Email updated successfully.")
-                
-            elif check == 3:
-                user_data[0]["pin"] = int(input("Enter your new four digit pin:- "))
-                Bank.__update()
-                print("Pin updated successfully.")
-                
-            else:
-                print("Invalid choice.")
+        account["balance"] += amount
+        self._update()
 
+        return True, f"₹{amount:,.2f} deposited successfully."
 
-    def delete_account(self):
-        account_number = input("Enter your account number:- ")
-        pin = int(input("Enter your pin:- "))
-                                        
-        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
-                                        
-        if user_data == []:
-            print("Invalid account number or pin.")
-        else:
-            Bank.data.remove(user_data[0])
-            Bank.__update()
-            print("Account deleted successfully.")
+    # -----------------------------
+    # Withdraw
+    # -----------------------------
+    def withdraw(self, account_number, pin, amount):
+        account = self._find_account(account_number, pin)
 
+        if account is None:
+            return False, "Invalid account number or PIN."
 
-user = Bank()
-print("Press 1 for creating an account:- ")
-print("Press 2 for deposit the money:- ")
-print("Press 3 for withdraw the money:- ")
-print("Press 4 for details of account:- ")
-print("Press 5 for update the details:- ")
-print("Press 6 for delete the account:- ")
+        if amount <= 0:
+            return False, "Amount must be greater than 0."
 
+        if amount > account["balance"]:
+            return False, "Insufficient balance."
 
-check = int(input("Enter your choice:- "))
+        account["balance"] -= amount
+        self._update()
 
-if check == 1:
-    user.create_account()
-    
-elif check == 2:
-    user.deposit()
-    
-elif check == 3:
-    user.withdraw()
+        return True, f"₹{amount:,.2f} withdrawn successfully."
 
-elif check == 4:
-    user.details()
+    # -----------------------------
+    # Account details
+    # -----------------------------
+    def get_details(self, account_number, pin):
+        account = self._find_account(account_number, pin)
 
-elif check == 5:
-    user.update_details()
+        if account is None:
+            return None
 
-elif check == 6:
-    user.delete_account()
+        return {
+            "account_number": account["account_number"],
+            "name": account["name"],
+            "age": account["age"],
+            "email": account["email"],
+            "balance": account["balance"]
+        }
 
-else:
-    print("Invalid choice.")
+    # -----------------------------
+    # Update details
+    # -----------------------------
+    def update_details(
+        self,
+        account_number,
+        pin,
+        name=None,
+        email=None,
+        new_pin=None
+    ):
+        account = self._find_account(account_number, pin)
+
+        if account is None:
+            return False, "Invalid account number or PIN."
+
+        if name is not None:
+            if not name.strip():
+                return False, "Name cannot be empty."
+
+            account["name"] = name.strip()
+
+        if email is not None:
+            if "@" not in email or "." not in email:
+                return False, "Invalid email."
+
+            account["email"] = email.strip()
+
+        if new_pin is not None:
+            if not 1000 <= new_pin <= 9999:
+                return False, "PIN must be exactly 4 digits."
+
+            account["pin"] = new_pin
+
+        self._update()
+
+        return True, "Account details updated successfully."
+
+    # -----------------------------
+    # Delete account
+    # -----------------------------
+    def delete_account(self, account_number, pin):
+        account = self._find_account(account_number, pin)
+
+        if account is None:
+            return False, "Invalid account number or PIN."
+
+        self.data.remove(account)
+        self._update()
+
+        return True, "Account deleted successfully."
