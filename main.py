@@ -10,7 +10,7 @@ class Bank:
     try:
         if Path(database).exists():
             with open(database) as f:
-                data=json.load(f.read())
+                data=json.load(f)
         else:
             print("Database file not found. Starting with an empty database.")
     except Exception as e:
@@ -62,10 +62,9 @@ class Bank:
     def deposit(self):
         account_number = input("Enter your account number:- ")
         pin = int(input("Enter your pin:- "))
-        
         user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
         
-        if user_data == False:
+        if user_data == []:
             print("Invalid account number or pin.")
         else:
             amount = int(input("Enter the amount to deposit:- "))
@@ -84,7 +83,7 @@ class Bank:
                 
         user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
                 
-        if user_data == False:
+        if user_data == []:
             print("Invalid account number or pin.")
         else:
             amount = int(input("Enter the amount to withdraw:- "))
@@ -104,14 +103,46 @@ class Bank:
                         
         user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
                         
-        if user_data == False:
+        if user_data == []:
             print("Invalid account number or pin.")
         else:
             print(f"Account number:- {user_data[0]['account_number']}")
             print(f"Name:- {user_data[0]['name']}")
             print(f"Balance:- {user_data[0]['balance']}")
 
-    
+
+    #update details
+    def update_details(self):
+        account_number = input("Enter your account number:- ")
+        pin = int(input("Enter your pin:- "))
+                                
+        user_data = [i for i in Bank.data if i["account_number"]==account_number and i["pin"]==pin]
+                                
+        if user_data == []:
+            print("Invalid account number or pin.")
+        else:
+            print("Press 1 for updating name:- ")
+            print("Press 2 for updating email:- ")
+            print("Press 3 for updating pin:- ")
+            check = int(input("Enter your choice:- "))
+            
+            if check == 1:
+                user_data[0]["name"] = input("Enter your new name:- ")
+                Bank.__update()
+                print("Name updated successfully.")
+                
+            elif check == 2:
+                user_data[0]["email"] = input("Enter your new email:- ")
+                Bank.__update()
+                print("Email updated successfully.")
+                
+            elif check == 3:
+                user_data[0]["pin"] = int(input("Enter your new four digit pin:- "))
+                Bank.__update()
+                print("Pin updated successfully.")
+                
+            else:
+                print("Invalid choice.")
 
 user = Bank()
 print("Press 1 for creating an account:- ")
@@ -132,5 +163,9 @@ elif check == 2:
     
 elif check == 3:
     user.withdraw()
+
 elif check == 4:
     user.details()
+
+elif check == 5:
+    user.update_details()
