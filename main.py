@@ -19,11 +19,19 @@ class Bank:
     
     #update database
     @staticmethod
-    def update():
+    def __update():
         with open(Bank.database, 'w') as f:
            f.write(json.dumps(Bank.data))
-           
-           
+     
+     
+    @classmethod
+    def __account_generate(cls):
+           alpha = random.choices(string.ascii_letters,k=3)
+           num = random.choices(string.digits,k=3)
+           spchar = random.choices("!@#$%^&*",k=1)
+           id = alpha + num + spchar
+           random.shuffle(id)
+           return "".join(id)
            
     #create account
     def create_account(self):
@@ -32,7 +40,7 @@ class Bank:
             "age":int(input("Enter your age:- ")),
             "email": input("Enter your email:- "),
             "pin":int(input("Enter your four digit pin:- ")),
-            "account_number":1234,
+            "account_number":Bank.__account_generate(),
             "balance":0
         }
         if data["age"] < 18 or len(str(data["pin"])) != 4:
@@ -44,7 +52,7 @@ class Bank:
             print("Please remember your account number and pin for future transactions.")
             
             Bank.data.append(data)
-            Bank.update()
+            Bank.__update()
 
 
 user = Bank()
